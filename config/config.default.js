@@ -50,6 +50,13 @@ module.exports = (appInfo) => {
         expiresIn: '1d',
     };
 
+    // 跨域
+    config.cors = {
+        origin: '*',
+        allowMethods: 'GET, HEAD, PUT, POST, DELETE, PATCH',
+        credentials: true,
+    };
+
     return {
         ...config,
         ...userConfig,

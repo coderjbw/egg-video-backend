@@ -17,7 +17,7 @@ module.exports = (app) => {
             type: Date,
             default: Date.now,
         },
-        uodatedAt: {
+        updatedAt: {
             type: Date,
             default: Date.now,
         },

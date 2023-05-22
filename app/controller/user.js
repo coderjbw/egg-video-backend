@@ -145,7 +145,7 @@ class UserController extends Controller {
         const userId = ctx.user._id;
         const channelId = ctx.params.userId;
         // 用户不能订阅自己
-        if (userId.equeals(channelId)) {
+        if (userId.eaquels(channelId)) {
             ctx.throw(422, '不能订阅自己');
         }
         // 添加订阅
@@ -153,9 +153,90 @@ class UserController extends Controller {
         // 发送响应
         ctx.body = {
             user: {
-                ...user.toJSON,
+                ...this.ctx.helper._.pick(user, [
+                    'username',
+                    'email',
+                    'avatar',
+                    'cover',
+                    'channelDescription',
+                    'subscribersCount',
+                ]),
                 isSubscribed: true,
             },
+        };
+    }
+
+    // 取消订阅
+    async unsubscribe() {
+        const { ctx } = this;
+        const userId = ctx.user._id;
+        const channelId = ctx.params.userId;
+        // 用户不能订阅自己
+        if (userId.eaquels(channelId)) {
+            ctx.throw(422, '不能订阅自己');
+        }
+        // 添加订阅
+        const user = await this.service.user.unsubscribe(userId, channelId);
+        // 发送响应
+        ctx.body = {
+            user: {
+                ...this.ctx.helper._.pick(user, [
+                    'username',
+                    'email',
+                    'avatar',
+                    'cover',
+                    'channelDescription',
+                    'subscribersCount',
+                ]),
+                isSubscribed: false,
+            },
+        };
+    }
+
+    async getUser() {
+        const { ctx } = this;
+        let isSubscribed = false;
+        if (ctx.user) {
+            const record = await this.app.model.Subscription.findOne({
+                user: ctx.user._id,
+                channel: ctx.params.userId,
+            });
+
+            if (record) {
+                isSubscribed = true;
+            }
+        }
+
+        const user = await this.app.model.User.findById(ctx.params.userId);
+
+        ctx.body = {
+            user: {
+                ...this.ctx.helper._.pick(user, [
+                    'userName',
+                    'email',
+                    'avatar',
+                    'cover',
+                    'channelDescription',
+                    'subscribersCount',
+                ]),
+                isSubscribed,
+            },
+        };
+    }
+
+    async getSubscriptions() {
+        const { ctx } = this;
+        const Subscription = this.app.model.Subscription;
+        let subscriptions = await Subscription.find({
+            user: ctx.params.userId,
+        }).populate('channel');
+
+        subscriptions = subscriptions.map((item) => {
+            return ctx.helper._.pick(item.channel, ['_id', 'userName', 'avatar']);
+        });
+
+        ctx.body = {
+            subscriptions,
         };
     }
 }
